@@ -15,85 +15,89 @@ const USE_CLOUDINARY = !!(
 
 let imageStorage, videoStorage, epaperStorage;
 
-if (USE_CLOUDINARY) {
-  // ── Cloudinary Storage ─────────────────────────────────────────────────────
-  const { v2 as cloudinary } = await import('cloudinary');
-  const { CloudinaryStorage } = await import('multer-storage-cloudinary');
+// Use an async IIFE so we can safely use await for dynamic imports
+// without placing top-level await inside an if-block (which causes parser errors).
+await (async () => {
+  if (USE_CLOUDINARY) {
+    // ── Cloudinary Storage ───────────────────────────────────────────────────
+    const { v2: cloudinary } = await import('cloudinary');
+    const { CloudinaryStorage } = await import('multer-storage-cloudinary');
 
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
-  imageStorage = new CloudinaryStorage({
-    cloudinary,
-    params: {
-      folder: 'ideaciti/images',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-      transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-    },
-  });
-
-  videoStorage = new CloudinaryStorage({
-    cloudinary,
-    params: {
-      folder: 'ideaciti/videos',
-      resource_type: 'video',
-      allowed_formats: ['mp4', 'webm', 'ogg', 'mov'],
-    },
-  });
-
-  epaperStorage = new CloudinaryStorage({
-    cloudinary,
-    params: (req, file) => {
-      if (file.fieldname === 'pdf' || file.mimetype === 'application/pdf') {
-        return {
-          folder: 'ideaciti/epapers',
-          resource_type: 'raw',
-          allowed_formats: ['pdf'],
-        };
-      }
-      return {
+    imageStorage = new CloudinaryStorage({
+      cloudinary,
+      params: {
         folder: 'ideaciti/images',
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-      };
-    },
-  });
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+      },
+    });
 
-} else {
-  // ── Local Disk Storage (fallback for local dev) ────────────────────────────
-  ['images', 'videos', 'epapers'].forEach((folder) => {
-    const dir = path.join(UPLOAD_ROOT, folder);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  });
+    videoStorage = new CloudinaryStorage({
+      cloudinary,
+      params: {
+        folder: 'ideaciti/videos',
+        resource_type: 'video',
+        allowed_formats: ['mp4', 'webm', 'ogg', 'mov'],
+      },
+    });
 
-  const safeName = (originalname) => {
-    const ext = path.extname(originalname);
-    const base = path.basename(originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 40);
-    return `${base}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-  };
+    epaperStorage = new CloudinaryStorage({
+      cloudinary,
+      params: (req, file) => {
+        if (file.fieldname === 'pdf' || file.mimetype === 'application/pdf') {
+          return {
+            folder: 'ideaciti/epapers',
+            resource_type: 'raw',
+            allowed_formats: ['pdf'],
+          };
+        }
+        return {
+          folder: 'ideaciti/images',
+          allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+        };
+      },
+    });
 
-  imageStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(UPLOAD_ROOT, 'images')),
-    filename: (req, file, cb) => cb(null, safeName(file.originalname)),
-  });
+  } else {
+    // ── Local Disk Storage (fallback for local dev) ──────────────────────────
+    ['images', 'videos', 'epapers'].forEach((folder) => {
+      const dir = path.join(UPLOAD_ROOT, folder);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    });
 
-  videoStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(UPLOAD_ROOT, 'videos')),
-    filename: (req, file, cb) => cb(null, safeName(file.originalname)),
-  });
+    const safeName = (originalname) => {
+      const ext = path.extname(originalname);
+      const base = path.basename(originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 40);
+      return `${base}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    };
 
-  epaperStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const folder = (file.fieldname === 'pdf' || file.mimetype === 'application/pdf')
-        ? 'epapers'
-        : 'images';
-      cb(null, path.join(UPLOAD_ROOT, folder));
-    },
-    filename: (req, file, cb) => cb(null, safeName(file.originalname)),
-  });
-}
+    imageStorage = multer.diskStorage({
+      destination: (req, file, cb) => cb(null, path.join(UPLOAD_ROOT, 'images')),
+      filename: (req, file, cb) => cb(null, safeName(file.originalname)),
+    });
+
+    videoStorage = multer.diskStorage({
+      destination: (req, file, cb) => cb(null, path.join(UPLOAD_ROOT, 'videos')),
+      filename: (req, file, cb) => cb(null, safeName(file.originalname)),
+    });
+
+    epaperStorage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        const folder = (file.fieldname === 'pdf' || file.mimetype === 'application/pdf')
+          ? 'epapers'
+          : 'images';
+        cb(null, path.join(UPLOAD_ROOT, folder));
+      },
+      filename: (req, file, cb) => cb(null, safeName(file.originalname)),
+    });
+  }
+})();
 
 // ─── Helper: get URL from uploaded file ────────────────────────────────────────
 // Cloudinary returns file.path (full URL). Local disk returns just filename.
