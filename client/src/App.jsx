@@ -34,10 +34,10 @@ const EPaperPage = () => {
   }, []);
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen py-6 transition-colors">
-      <div className="max-w-6xl w-full mx-auto px-4 space-y-6">
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen py-4 sm:py-6 pb-20 md:pb-8 transition-colors">
+      <div className="max-w-6xl w-full mx-auto px-3 sm:px-4 space-y-6">
         <div className="border-l-4 border-red-650 pl-3">
-          <h2 className="text-xl font-extrabold tracking-tight uppercase">E-Paper</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold tracking-tight uppercase">E-Paper</h2>
           <p className="text-xs text-slate-400">Read print edition replica newspapers offline.</p>
         </div>
 
@@ -46,7 +46,7 @@ const EPaperPage = () => {
           <p className="text-xs text-slate-400">No e-paper editions published yet.</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs font-semibold">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 text-xs font-semibold">
           {issues.map((ep) => (
             <div key={ep._id} className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow p-4 space-y-3 flex flex-col justify-between">
               <div className="space-y-2">

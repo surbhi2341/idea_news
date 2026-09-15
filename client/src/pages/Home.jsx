@@ -319,15 +319,41 @@ const Home = () => {
       <AdBanner type="Banner" />
 
       {/* Main 3-Column Layout: [Left Sidebar] [Center Feed] [Right Widgets] */}
-      <div className="max-w-[1440px] mx-auto px-3 sm:px-4 py-4 flex flex-col md:flex-row gap-5 items-start">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-col lg:flex-row gap-5 items-start pb-20 md:pb-8">
 
-        {/* ── LEFT COLUMN: Vertical Categories Sidebar ── */}
-        <aside className="w-full md:w-56 lg:w-60 flex-shrink-0">
+        {/* ── LEFT COLUMN: Vertical Categories Sidebar (Desktop only) ── */}
+        <aside className="hidden lg:block w-56 lg:w-60 flex-shrink-0">
           <Sidebar />
         </aside>
 
         {/* ── CENTER COLUMN: Main News Feed & Trending Pills ── */}
-        <div className="flex-1 min-w-0 space-y-4">
+        <div className="flex-1 min-w-0 w-full space-y-3 sm:space-y-4">
+
+          {/* Mobile/Tablet Horizontal Category Scroll Bar (Visible on mobile/tablet) */}
+          <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 px-1">
+            {[
+              { en: 'All', hi: 'मुख्य खबरें', cat: '' },
+              { en: 'National', hi: 'राष्ट्रीय', cat: 'National' },
+              { en: 'Politics', hi: 'राजनीति', cat: 'Politics' },
+              { en: 'Crime', hi: 'क्राइम', cat: 'Crime' },
+              { en: 'Cricket', hi: 'क्रिकेट', cat: 'Cricket' },
+              { en: 'Business', hi: 'बिज़नेस', cat: 'Business' },
+              { en: 'Technology', hi: 'टेक', cat: 'Technology' },
+              { en: 'Entertainment', hi: 'मनोरंजन', cat: 'Entertainment' },
+              { en: 'Education', hi: 'शिक्षा', cat: 'Education' },
+            ].map((c) => (
+              <button
+                key={c.en}
+                onClick={() => navigate(c.cat ? `/?category=${c.cat}` : '/')}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors flex-shrink-0
+                  ${(!category && !c.cat) || (category?.toLowerCase() === c.cat?.toLowerCase() && c.cat)
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'}`}
+              >
+                {language === 'Hindi' ? c.hi : c.en}
+              </button>
+            ))}
+          </div>
 
           {/* Active Category Banner Indicator */}
           {category && (
