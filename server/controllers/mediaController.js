@@ -1,4 +1,5 @@
 import { Video } from '../models/Media.js';
+import { getUploadUrl } from '../middleware/uploadMiddleware.js';
 
 // @desc  Journalist/Editor/Admin uploads a video
 // @route POST /api/media/videos
@@ -13,7 +14,7 @@ export const createVideo = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Title is required' });
     }
 
-    const url = req.file ? `/uploads/videos/${req.file.filename}` : req.body.url;
+    const url = req.file ? getUploadUrl(req.file, 'videos') : req.body.url;
 
     const video = await Video.create({
       title,
@@ -29,6 +30,7 @@ export const createVideo = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // @desc  Public list of videos (latest first, optional type filter)
 // @route GET /api/media/videos

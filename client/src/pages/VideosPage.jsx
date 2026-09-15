@@ -167,9 +167,10 @@ const VideosPage = () => {
                 {/* Background Video Preview / Poster */}
                 <video
                   src={getMediaUrl(v.url)}
+                  poster={v.thumbnail ? getMediaUrl(v.thumbnail) : `https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=400&h=711&fit=crop`}
                   className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500 pointer-events-none"
                   muted
-                  preload="metadata"
+                  preload="none"
                 />
 
                 {/* Gradient Overlays for High Contrast */}
@@ -233,6 +234,7 @@ const VideosPage = () => {
               <video
                 ref={modalVideoRef}
                 src={getMediaUrl(activeVideo.url)}
+                poster={activeVideo.thumbnail ? getMediaUrl(activeVideo.thumbnail) : `https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=400&h=711&fit=crop`}
                 autoPlay
                 playsInline
                 muted={isMuted}

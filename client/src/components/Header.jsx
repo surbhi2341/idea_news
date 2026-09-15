@@ -7,7 +7,7 @@ import { Search, Tv, BookOpen, Sun, Moon, Bell, User, LogOut, ChevronDown, MapPi
 
 // The separate admin panel app (news/video/e-paper uploads etc). Update
 // this if you deploy it to a different URL.
-const ADMIN_PANEL_URL = 'http://localhost:3001';
+const ADMIN_PANEL_URL = import.meta.env.VITE_ADMIN_URL || 'https://idea-news-admin.onrender.com';
 const STAFF_ROLES = ['Journalist', 'Editor', 'Advertiser', 'Admin', 'Super Admin'];
 import logo from '/logo.png';
 

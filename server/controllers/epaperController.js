@@ -1,4 +1,5 @@
 import EPaper from '../models/EPaper.js';
+import { getUploadUrl } from '../middleware/uploadMiddleware.js';
 
 // @desc  Admin/Editor uploads a new e-paper issue
 // @route POST /api/epaper
@@ -13,9 +14,9 @@ export const createEPaper = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Edition name is required' });
     }
 
-    const pdfUrl = `/uploads/epapers/${req.files.pdf[0].filename}`;
+    const pdfUrl = getUploadUrl(req.files.pdf[0], 'epapers');
     const coverImage = req.files?.coverImage?.[0]
-      ? `/uploads/images/${req.files.coverImage[0].filename}`
+      ? getUploadUrl(req.files.coverImage[0], 'images')
       : undefined;
 
     const epaper = await EPaper.create({
@@ -31,6 +32,7 @@ export const createEPaper = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // @desc  Public list of e-paper issues (latest first)
 // @route GET /api/epaper

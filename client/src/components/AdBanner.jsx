@@ -7,19 +7,19 @@ import { getMediaUrl } from '../utils/mediaUtils.js';
 const FALLBACK_BANNERS = [
   {
     _id: 'fb1',
-    imageUrl: '/uploads/images/news_ad_banner.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1200&h=140&fit=crop',
     title: 'Download IDEACITI App – Stay Informed Anywhere',
     redirectUrl: '#',
   },
   {
     _id: 'fb2',
-    imageUrl: '/uploads/images/ad_banner_2.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?q=80&w=1200&h=140&fit=crop',
     title: 'Smart India 2026 – Building Tomorrow\'s Cities',
     redirectUrl: '#',
   },
   {
     _id: 'fb3',
-    imageUrl: '/uploads/images/ad_banner_3.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1200&h=140&fit=crop',
     title: 'Business India Expo 2026 – Greater Noida',
     redirectUrl: '#',
   },
