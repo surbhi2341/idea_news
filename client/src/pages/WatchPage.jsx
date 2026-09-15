@@ -12,7 +12,7 @@ const WatchPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeVideoIndex, setActiveVideoIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const modalVideoRef = useRef(null);
 
   const categories = [
@@ -57,6 +57,22 @@ const WatchPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (activeVideoIndex !== null && modalVideoRef.current) {
+      modalVideoRef.current.load();
+      const playPromise = modalVideoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.then(() => setIsPlaying(true)).catch(() => {
+          if (modalVideoRef.current) {
+            modalVideoRef.current.muted = true;
+            setIsMuted(true);
+            modalVideoRef.current.play().catch(() => {});
+          }
+        });
+      }
+    }
+  }, [activeVideoIndex]);
+
   const handleClosePlayer = () => {
     setActiveVideoIndex(null);
     setIsPlaying(false);
@@ -76,12 +92,12 @@ const WatchPage = () => {
 
   const togglePlayPause = () => {
     if (modalVideoRef.current) {
-      if (isPlaying) {
-        modalVideoRef.current.pause();
+      if (modalVideoRef.current.paused) {
+        modalVideoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
       } else {
-        modalVideoRef.current.play();
+        modalVideoRef.current.pause();
+        setIsPlaying(false);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -217,6 +233,10 @@ const WatchPage = () => {
                 playsInline
                 muted={isMuted}
                 loop
+                preload="auto"
+                crossOrigin="anonymous"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
                 onClick={togglePlayPause}
                 className="w-full h-full object-cover cursor-pointer"
               />
