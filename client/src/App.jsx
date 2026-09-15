@@ -19,6 +19,8 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import { Play, Calendar, Download, Eye, FileText, Video as VideoIcon, Facebook, Twitter, Youtube, MapPin, Phone, Mail } from 'lucide-react';
 import logo from '/logo.png';
 
+import { getMediaUrl } from './utils/mediaUtils.js';
+
 // E-Paper Page Layout
 const EPaperPage = () => {
   const [issues, setIssues] = useState([]);
@@ -49,7 +51,7 @@ const EPaperPage = () => {
             <div key={ep._id} className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow p-4 space-y-3 flex flex-col justify-between">
               <div className="space-y-2">
                 <img
-                  src={ep.coverImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=300&h=420&fit=crop'}
+                  src={ep.coverImage ? getMediaUrl(ep.coverImage) : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=300&h=420&fit=crop'}
                   alt=""
                   className="w-full h-64 object-cover rounded border dark:border-slate-800"
                 />
@@ -57,8 +59,8 @@ const EPaperPage = () => {
                 <p className="text-slate-400 flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(ep.date).toLocaleDateString()}</p>
               </div>
               <div className="flex gap-2 pt-2 border-t dark:border-slate-800">
-                <a href={ep.pdfUrl} download className="flex-1 bg-red-600 hover:bg-red-750 text-white font-extrabold py-2 rounded text-center flex items-center justify-center gap-1"><Download className="h-3.5 w-3.5" />Download</a>
-                <a href={ep.pdfUrl} target="_blank" rel="noreferrer" className="bg-slate-100 dark:bg-slate-800 p-2 rounded hover:bg-slate-205 dark:hover:bg-slate-700 text-slate-500"><Eye className="h-4 w-4" /></a>
+                <a href={getMediaUrl(ep.pdfUrl)} target="_blank" rel="noreferrer" download className="flex-1 bg-red-600 hover:bg-red-750 text-white font-extrabold py-2 rounded text-center flex items-center justify-center gap-1"><Download className="h-3.5 w-3.5" />Download</a>
+                <a href={getMediaUrl(ep.pdfUrl)} target="_blank" rel="noreferrer" className="bg-slate-100 dark:bg-slate-800 p-2 rounded hover:bg-slate-205 dark:hover:bg-slate-700 text-slate-500"><Eye className="h-4 w-4" /></a>
               </div>
             </div>
           ))}

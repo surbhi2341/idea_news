@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getMediaUrl } from '../utils/mediaUtils.js';
 
 // ── Fallback banner slides shown when no active DB campaign is found ──
 const FALLBACK_BANNERS = [
@@ -90,7 +91,7 @@ const BannerCarousel = ({ slides }) => {
               }`}
           >
             <img
-              src={slide.imageUrl}
+              src={getMediaUrl(slide.imageUrl)}
               alt={slide.title || 'Advertisement'}
               className="w-full max-w-[1200px] h-auto max-h-[130px] sm:max-h-[130px] md:max-h-[140px] object-contain rounded-s border border-slate-200/60 dark:border-slate-800"
               loading="eager"

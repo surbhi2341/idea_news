@@ -6,6 +6,7 @@ import PollWidget from '../components/PollWidget.jsx';
 import AdBanner from '../components/AdBanner.jsx';
 import Sidebar from '../components/Sidebar.jsx';
 import { getLocalizedNews } from '../utils/languageUtils.js';
+import { getMediaUrl } from '../utils/mediaUtils.js';
 import {
   BookOpen,
   Star,
@@ -394,7 +395,7 @@ const Home = () => {
                 {/* Main Hero Video / Photo with Centered Play Button Overlay */}
                 <Link to={`/news/${featured.slug}`} className="block relative group rounded-xl overflow-hidden bg-slate-950">
                   <img
-                    src={featured.image || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&h=450&fit=crop'}
+                    src={featured.image ? getMediaUrl(featured.image) : 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=800&h=450&fit=crop'}
                     alt={featured.title}
                     className="w-full h-64 sm:h-80 md:h-96 object-cover group-hover:scale-102 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                   />
@@ -430,7 +431,7 @@ const Home = () => {
                     <div>
                       <Link to={`/news/${item.slug}`} className="block relative group overflow-hidden">
                         <img
-                          src={item.image || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=400&h=240&fit=crop'}
+                          src={item.image ? getMediaUrl(item.image) : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=400&h=240&fit=crop'}
                           alt={item.title}
                           className="w-full h-40 object-cover group-hover:scale-103 transition-transform duration-500"
                         />

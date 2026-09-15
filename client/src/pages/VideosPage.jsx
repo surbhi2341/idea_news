@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { Play, Pause, X, ChevronUp, ChevronDown, Volume2, VolumeX, Eye, Calendar, Sparkles } from 'lucide-react';
 import logo from '/logo.png';
+import { getMediaUrl } from '../utils/mediaUtils.js';
 
 const VideosPage = () => {
   const { language } = useSelector((state) => state.theme);
@@ -148,7 +149,7 @@ const VideosPage = () => {
               >
                 {/* Background Video Preview / Poster */}
                 <video
-                  src={v.url}
+                  src={getMediaUrl(v.url)}
                   className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500 pointer-events-none"
                   muted
                   preload="metadata"
@@ -214,7 +215,7 @@ const VideosPage = () => {
             <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
               <video
                 ref={modalVideoRef}
-                src={activeVideo.url}
+                src={getMediaUrl(activeVideo.url)}
                 autoPlay
                 playsInline
                 muted={isMuted}

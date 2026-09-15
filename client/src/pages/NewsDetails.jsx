@@ -5,6 +5,7 @@ import axios from 'axios';
 import CommentsSection from '../components/CommentsSection.jsx';
 import AdBanner from '../components/AdBanner.jsx';
 import { getLocalizedNews } from '../utils/languageUtils.js';
+import { getMediaUrl } from '../utils/mediaUtils.js';
 import { increaseFontSize, decreaseFontSize } from '../redux/themeSlice.js';
 import { 
   Heart, ThumbsUp, ThumbsDown, Bookmark, Share2, Printer, 
@@ -295,7 +296,7 @@ const NewsDetails = () => {
           {article.image && (
             <div className="rounded-xl overflow-hidden border dark:border-slate-800 shadow-sm">
               <img 
-                src={article.image} 
+                src={getMediaUrl(article.image)} 
                 alt={article.title} 
                 className="w-full h-auto max-h-[460px] object-cover"
               />
@@ -326,10 +327,10 @@ const NewsDetails = () => {
                   </div>
                 ) : (
                   <video
-                    src={article.videoUrl}
+                    src={getMediaUrl(article.videoUrl)}
                     controls
                     className="w-full max-h-[420px] bg-black"
-                    poster={article.image || undefined}
+                    poster={article.image ? getMediaUrl(article.image) : undefined}
                   >
                     Your browser does not support the video tag.
                   </video>
