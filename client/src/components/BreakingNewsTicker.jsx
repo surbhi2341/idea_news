@@ -31,7 +31,8 @@ const BreakingNewsTicker = () => {
     fetchBreaking();
 
     // Socket listener for live breaking news push notifications
-    const socket = io('http://localhost:5001');
+    const socketBackend = import.meta.env.VITE_API_BASE_URL || 'https://idea-news-backend.onrender.com';
+    const socket = io(socketBackend);
     socket.on('breaking_news', (newItem) => {
       setBreakingNews((prev) => [newItem, ...prev.slice(0, 9)]);
     });

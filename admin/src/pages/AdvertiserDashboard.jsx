@@ -12,6 +12,10 @@ const AdvertiserDashboard = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [redirectUrl, setRedirectUrl] = useState('');
   const [startDate, setStartDate] = useState('');
+  // New states for file upload
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
   const [endDate, setEndDate] = useState('');
 
   const fetchCampaigns = async () => {
@@ -44,17 +48,37 @@ const AdvertiserDashboard = () => {
 
   const handleSubmitAd = async (e) => {
     e.preventDefault();
-    if (!title || !imageUrl || !redirectUrl) return;
+    // Basic validation
+    if (!title || (!imageUrl && !imageFile) || !redirectUrl) return;
 
     try {
+      let finalImageUrl = imageUrl;
+      // If a file was selected, upload it first
+      if (imageFile) {
+        setImageUploading(true);
+        const formData = new FormData();
+        formData.append('image', imageFile);
+        const token = localStorage.getItem('bh_token');
+        const uploadRes = await axios.post('/api/ads/upload-image', formData, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        });
+        setImageUploading(false);
+        if (uploadRes.data.success) {
+          finalImageUrl = uploadRes.data.url;
+        } else {
+          alert('Image upload failed');
+          return;
+        }
+      }
+
       const payload = {
         title,
         advertiser: 'Self Kampaign',
         type,
-        imageUrl,
+        imageUrl: finalImageUrl,
         redirectUrl,
         startDate: startDate ? new Date(startDate) : new Date(),
-        endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 1000),
+        endDate: endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       };
 
       const token = localStorage.getItem('bh_token');
@@ -66,14 +90,17 @@ const AdvertiserDashboard = () => {
         setCampaigns(prev => [res.data.ad, ...prev]);
         setTitle('');
         setImageUrl('');
+        setImageFile(null);
+        setImagePreview('');
         setRedirectUrl('');
       }
     } catch {
-      // Mock submit
+      // Mock submit fallback
       const mockAd = {
         _id: `mock-ad-${Math.random()}`,
         title,
         type,
+        imageUrl: imageUrl || (imageFile ? URL.createObjectURL(imageFile) : ''),
         views: 0,
         clicks: 0,
         advertiser: 'Self Kampaign',
@@ -82,6 +109,8 @@ const AdvertiserDashboard = () => {
       setCampaigns(prev => [mockAd, ...prev]);
       setTitle('');
       setImageUrl('');
+      setImageFile(null);
+      setImagePreview('');
       setRedirectUrl('');
       alert('Campaign created (Simulated)');
     }
@@ -90,27 +119,27 @@ const AdvertiserDashboard = () => {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 min-h-screen py-6 transition-colors">
       <div className="max-w-7xl mx-auto px-4 space-y-6">
-        
+
         {/* Header bar */}
         <div className="flex justify-between items-center bg-white dark:bg-slate-900 border dark:border-slate-800 p-4 rounded-lg shadow-sm">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase">Advertiser Campaign Panel</h2>
             <p className="text-xs text-slate-400">Launch direct sponsorships, track impressions, and calculate Click-Through-Rates (CTR).</p>
           </div>
-          <button 
+          <button
             onClick={fetchCampaigns}
-            className="bg-red-50 dark:bg-red-950/20 text-red-655 p-2 rounded-lg"
+            className="bg-red-50 dark:bg-red-950/20 text-red-600 p-2 rounded-lg"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs font-semibold">
-          
+
           {/* Create campaign form */}
           <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
             <h3 className="font-extrabold text-sm border-b pb-2 text-slate-850 dark:text-slate-200 uppercase">New Ad Placement</h3>
-            
+
             <form onSubmit={handleSubmitAd} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] text-slate-400 uppercase">Campaign Title</label>
@@ -138,15 +167,22 @@ const AdvertiserDashboard = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-400 uppercase">Image URL</label>
+                <label className="text-[10px] text-slate-400 uppercase">Campaign Image</label>
                 <input
-                  type="text"
+                  type="file"
+                  accept="image/*"
                   required
-                  placeholder="https://images.unsplash.com/..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full text-xs p-2.5 rounded border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setImageFile(file);
+                    if (file) setImagePreview(URL.createObjectURL(file));
+                    else setImagePreview('');
+                  }}
+                  className="w-full text-xs p-2.5 rounded border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 file:mr-2 file:text-xs file:font-bold file:uppercase file:border-0 file:bg-red-600 file:text-white file:px-2 file:py-1 file:rounded"
                 />
+                {imagePreview && (
+                  <img src={imagePreview} alt="Preview" className="mt-2 w-full max-w-sm object-cover rounded-md border" />
+                )}
               </div>
 
               <div className="space-y-1">
@@ -163,7 +199,7 @@ const AdvertiserDashboard = () => {
 
               <button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-750 text-white font-extrabold text-xs py-2.5 rounded shadow"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs py-2.5 rounded shadow"
               >
                 Submit Campaign
               </button>

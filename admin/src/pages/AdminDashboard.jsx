@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Users, Settings, LayoutGrid, Calendar, RefreshCw, 
+import {
+  Users, Settings, LayoutGrid, Calendar, RefreshCw,
   UserCog, ShieldAlert, BarChart3, Database, KeyRound, BellRing,
   Video as VideoIcon, Newspaper, Trash2, UploadCloud, List,
   Image as ImageIcon, Eye, ExternalLink, Tag, User, Clock, CheckCircle, XCircle, AlertCircle,
@@ -25,6 +25,9 @@ const AdminDashboard = () => {
   const [adAdvertiser, setAdAdvertiser] = useState('');
   const [adType, setAdType] = useState('Banner');
   const [adImageUrl, setAdImageUrl] = useState('');
+  const [adImageFile, setAdImageFile] = useState(null);
+  const [adImagePreview, setAdImagePreview] = useState('');
+  const [adImageUploading, setAdImageUploading] = useState(false);
   const [adRedirectUrl, setAdRedirectUrl] = useState('');
   const [adStartDate, setAdStartDate] = useState('');
   const [adEndDate, setAdEndDate] = useState('');
@@ -373,14 +376,31 @@ const AdminDashboard = () => {
 
   const handleCreateAd = async (e) => {
     e.preventDefault();
-    if (!adTitle || !adImageUrl || !adRedirectUrl) return alert('Fill required fields');
+    if (!adTitle || (!adImageUrl && !adImageFile) || !adRedirectUrl) return alert('Campaign Title, Image aur Destination Link zaroori hain!');
     try {
+      setAdImageUploading(true);
+      let finalImageUrl = adImageUrl;
+      if (adImageFile) {
+        const formData = new FormData();
+        formData.append('image', adImageFile);
+        const token = localStorage.getItem('bh_token');
+        const uploadRes = await axios.post('/api/ads/upload-image', formData, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        });
+        if (uploadRes.data.success) {
+          finalImageUrl = uploadRes.data.url;
+        } else {
+          setAdImageUploading(false);
+          return alert('Image upload fail ho gaya!');
+        }
+      }
+
       const token = localStorage.getItem('bh_token');
       const payload = {
         title: adTitle,
         advertiser: adAdvertiser || 'Direct client',
         type: adType,
-        imageUrl: adImageUrl,
+        imageUrl: finalImageUrl,
         redirectUrl: adRedirectUrl,
         startDate: adStartDate ? new Date(adStartDate) : new Date(),
         endDate: adEndDate ? new Date(adEndDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -391,13 +411,23 @@ const AdminDashboard = () => {
       });
       alert('Advertisement Campaign created and active!');
       setAdTitle('');
+      setAdAdvertiser('');
       setAdImageUrl('');
+      setAdImageFile(null);
+      setAdImagePreview('');
       setAdRedirectUrl('');
-    } catch {
-      alert('Ad campaign created (Simulated)');
+      setAdStartDate('');
+      setAdEndDate('');
+      fetchStats();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Ad campaign created (Simulated)');
       setAdTitle('');
       setAdImageUrl('');
+      setAdImageFile(null);
+      setAdImagePreview('');
       setAdRedirectUrl('');
+    } finally {
+      setAdImageUploading(false);
     }
   };
 
@@ -485,16 +515,16 @@ const AdminDashboard = () => {
   return (
     <div className="bg-slate-50 dark:bg-slate-950 min-h-screen py-6 transition-colors">
       <div className="max-w-7xl mx-auto px-4 space-y-6">
-        
+
         {/* Top Header Card */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white dark:bg-slate-900 border dark:border-slate-800 p-4 rounded-lg shadow-sm gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 uppercase">Platform Control Center</h2>
             <p className="text-xs text-slate-400">Manage site settings, user roles, direct campaigns, and view telemetry metrics.</p>
           </div>
-          <button 
+          <button
             onClick={fetchAdminData}
-            className="flex items-center gap-1.5 bg-red-655 hover:bg-red-700 text-white font-extrabold text-xs px-3.5 py-2 rounded shadow transition-all self-end sm:self-auto"
+            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-3.5 py-2 rounded shadow transition-all self-end sm:self-auto"
           >
             <RefreshCw className="h-4 w-4 animate-spin-slow" />
             <span>Sync DB Settings</span>
@@ -521,13 +551,13 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            
+
             {/* Breaking News Tab */}
             {activeTab === 'breaking' && (
               <div className="space-y-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 border-b pb-2">
-                    <BellRing className="h-5 w-5 text-red-655" />
+                    <BellRing className="h-5 w-5 text-red-600" />
                     <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Add Live Breaking News</h3>
                   </div>
                   <form onSubmit={handleCreateBreakingNews} className="space-y-4 text-xs font-semibold">
@@ -566,7 +596,7 @@ const AdminDashboard = () => {
                     </div>
                     <button
                       type="submit"
-                      className="bg-red-655 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors"
+                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors"
                     >
                       Publish Breaking News
                     </button>
@@ -593,11 +623,10 @@ const AdminDashboard = () => {
                             <td className="py-3">
                               <button
                                 onClick={() => handleToggleBreakingStatus(item._id)}
-                                className={`px-2.5 py-1 rounded text-[10px] font-black uppercase ${
-                                  item.isActive 
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400' 
+                                className={`px-2.5 py-1 rounded text-[10px] font-black uppercase ${item.isActive
+                                    ? 'bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400'
                                     : 'bg-slate-100 text-slate-500 dark:bg-slate-800'
-                                }`}
+                                  }`}
                               >
                                 {item.isActive ? 'Active' : 'Inactive'}
                               </button>
@@ -1002,7 +1031,7 @@ const AdminDashboard = () => {
                   const art = selectedArticle;
                   const isYouTube = art.videoUrl && /youtu\.be|youtube\.com/i.test(art.videoUrl);
                   const ytId = isYouTube
-                    ? art.videoUrl.replace(/.*(?:youtu\.be\/|v=|embed\/)/,'').split(/[?&]/)[0]
+                    ? art.videoUrl.replace(/.*(?:youtu\.be\/|v=|embed\/)/, '').split(/[?&]/)[0]
                     : null;
 
                   return (
@@ -1017,12 +1046,11 @@ const AdminDashboard = () => {
                           <div className="flex items-center gap-2">
                             <span className="text-[10px] font-black text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded uppercase">{art.category}</span>
                             {art.status && (
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${
-                                art.status === 'Published' ? 'bg-green-100 text-green-700' :
-                                art.status === 'Pending'   ? 'bg-amber-100 text-amber-700' :
-                                art.status === 'Draft'     ? 'bg-slate-100 text-slate-500' :
-                                'bg-red-100 text-red-600'
-                              }`}>{art.status}</span>
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${art.status === 'Published' ? 'bg-green-100 text-green-700' :
+                                  art.status === 'Pending' ? 'bg-amber-100 text-amber-700' :
+                                    art.status === 'Draft' ? 'bg-slate-100 text-slate-500' :
+                                      'bg-red-100 text-red-600'
+                                }`}>{art.status}</span>
                             )}
                             {art.breakingNews && (
                               <span className="bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded animate-pulse">BREAKING</span>
@@ -1231,9 +1259,9 @@ const AdminDashboard = () => {
                         const hasImage = !!article.image;
                         const statusColors = {
                           Published: 'bg-green-100 dark:bg-green-950/30 text-green-700 dark:text-green-400',
-                          Pending:   'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400',
-                          Draft:     'bg-slate-100 dark:bg-slate-800 text-slate-500',
-                          Archived:  'bg-red-100 dark:bg-red-950/20 text-red-600',
+                          Pending: 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400',
+                          Draft: 'bg-slate-100 dark:bg-slate-800 text-slate-500',
+                          Archived: 'bg-red-100 dark:bg-red-950/20 text-red-600',
                         };
                         const StatusIcon = {
                           Published: CheckCircle,
@@ -1355,7 +1383,7 @@ const AdminDashboard = () => {
             {activeTab === 'users' && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <Users className="h-5 w-5 text-red-655" />
+                  <Users className="h-5 w-5 text-red-600" />
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Registered Accounts</h3>
                 </div>
 
@@ -1410,7 +1438,7 @@ const AdminDashboard = () => {
             {activeTab === 'ads' && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-6">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <LayoutGrid className="h-5 w-5 text-red-655" />
+                  <LayoutGrid className="h-5 w-5 text-red-600" />
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Create Direct Campaign</h3>
                 </div>
 
@@ -1454,15 +1482,24 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] text-slate-400 uppercase font-black">Banner Image URL</label>
+                      <label className="text-[10px] text-slate-400 uppercase font-black">Banner Image Upload</label>
                       <input
-                        type="text"
-                        required
-                        placeholder="https://domain.com/ad-image.png"
-                        value={adImageUrl}
-                        onChange={(e) => setAdImageUrl(e.target.value)}
-                        className="w-full text-xs p-2.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-850"
+                        type="file"
+                        accept="image/*"
+                        required={!adImageUrl}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          setAdImageFile(file);
+                          if (file) setAdImagePreview(URL.createObjectURL(file));
+                          else setAdImagePreview('');
+                        }}
+                        className="w-full text-xs p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-850 file:mr-2 file:text-xs file:font-bold file:uppercase file:border-0 file:bg-red-600 file:text-white file:px-2.5 file:py-1 file:rounded"
                       />
+                      {adImagePreview && (
+                        <div className="mt-2 p-1 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                          <img src={adImagePreview} alt="Ad Preview" className="max-h-28 w-auto object-contain rounded" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-1">
@@ -1501,7 +1538,7 @@ const AdminDashboard = () => {
 
                   <button
                     type="submit"
-                    className="bg-red-655 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors"
+                    className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors"
                   >
                     Deploy Campaign
                   </button>
@@ -1514,7 +1551,7 @@ const AdminDashboard = () => {
               <div className="space-y-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 border-b pb-2">
-                    <VideoIcon className="h-5 w-5 text-red-655" />
+                    <VideoIcon className="h-5 w-5 text-red-600" />
                     <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Upload New Video</h3>
                   </div>
                   <form onSubmit={handleUploadVideo} className="space-y-4 text-xs font-semibold">
@@ -1566,7 +1603,7 @@ const AdminDashboard = () => {
                     <button
                       type="submit"
                       disabled={videoUploading}
-                      className="bg-red-655 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       <UploadCloud className="h-4 w-4" />{videoUploading ? 'Uploading...' : 'Upload Video'}
                     </button>
@@ -1584,7 +1621,7 @@ const AdminDashboard = () => {
                             <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{v.title}</p>
                             <p className="text-[10px] text-slate-400 uppercase">{v.type}</p>
                           </div>
-                          <button onClick={() => handleDeleteVideo(v._id)} className="text-red-600 hover:text-red-750 shrink-0"><Trash2 className="h-4 w-4" /></button>
+                          <button onClick={() => handleDeleteVideo(v._id)} className="text-red-600 hover:text-red-700 shrink-0"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </div>
                     ))}
@@ -1599,7 +1636,7 @@ const AdminDashboard = () => {
               <div className="space-y-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 border-b pb-2">
-                    <Newspaper className="h-5 w-5 text-red-655" />
+                    <Newspaper className="h-5 w-5 text-red-600" />
                     <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Upload New E-Paper Issue</h3>
                   </div>
                   <form onSubmit={handleUploadEPaper} className="space-y-4 text-xs font-semibold">
@@ -1651,7 +1688,7 @@ const AdminDashboard = () => {
                     <button
                       type="submit"
                       disabled={epaperUploading}
-                      className="bg-red-655 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow transition-colors flex items-center gap-1.5 disabled:opacity-50"
                     >
                       <UploadCloud className="h-4 w-4" />{epaperUploading ? 'Uploading...' : 'Upload E-Paper'}
                     </button>
@@ -1667,7 +1704,7 @@ const AdminDashboard = () => {
                           <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{ep.edition}</p>
                           <p className="text-[10px] text-slate-400">{new Date(ep.date).toLocaleDateString()}</p>
                         </div>
-                        <button onClick={() => handleDeleteEPaper(ep._id)} className="text-red-600 hover:text-red-750 shrink-0"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => handleDeleteEPaper(ep._id)} className="text-red-600 hover:text-red-700 shrink-0"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     ))}
                     {epapersList.length === 0 && <p className="text-slate-400 text-xs">Koi e-paper issue upload nahi hui abhi tak.</p>}
@@ -1680,7 +1717,7 @@ const AdminDashboard = () => {
             {activeTab === 'settings' && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <Settings className="h-5 w-5 text-red-655" />
+                  <Settings className="h-5 w-5 text-red-600" />
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Global Site Configurations</h3>
                 </div>
 
@@ -1723,7 +1760,7 @@ const AdminDashboard = () => {
                   <div className="pt-2 border-t flex gap-2">
                     <button
                       type="submit"
-                      className="bg-red-600 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow"
+                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-2.5 rounded shadow"
                     >
                       Save Configuration
                     </button>
@@ -1743,7 +1780,7 @@ const AdminDashboard = () => {
             {activeTab === 'logs' && (
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm space-y-4">
                 <div className="flex items-center gap-2 border-b pb-2">
-                  <ShieldAlert className="h-5 w-5 text-red-655" />
+                  <ShieldAlert className="h-5 w-5 text-red-600" />
                   <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm uppercase">Audit Security Feed</h3>
                 </div>
 

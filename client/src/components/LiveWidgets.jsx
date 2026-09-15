@@ -14,7 +14,8 @@ export const LiveCricketWidget = () => {
 
   useEffect(() => {
     // Connect to WebSocket to simulate socket updates
-    const socket = io('http://localhost:5001');
+    const socketBackend = import.meta.env.VITE_API_BASE_URL || 'https://idea-news-backend.onrender.com';
+    const socket = io(socketBackend);
 
     socket.on('cricket_score', (data) => {
       setScore(data);

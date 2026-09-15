@@ -56,6 +56,18 @@ export const trackClick = async (req, res, next) => {
   }
 };
 
+export const updateAd = async (req, res, next) => {
+  try {
+    const ad = await Advertisement.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!ad) {
+      return res.status(404).json({ success: false, message: 'Ad not found' });
+    }
+    res.json({ success: true, ad });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteAd = async (req, res, next) => {
   try {
     const ad = await Advertisement.findByIdAndDelete(req.params.id);
